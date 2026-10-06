@@ -1,0 +1,565 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>BER 540 Stats Trainer</title>
+<style>
+/* Layout: single centered column; sticky tab bar; one problem card at a time. */
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3;
+  --ink:#1f2328; --muted:#5c6066; --line:#e4ded3;
+  --accent:#1a6f78; --accent-soft:#e1eff0; --accent-ink:#0f4b52;
+  --good:#2c7a4b; --good-soft:#e5f2ea; --bad:#b0303f; --bad-soft:#f7e8ea;
+  --radius:12px;
+  --f-head:"Archivo",system-ui,sans-serif;
+  --f-body:"Spline Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171b; --surface:#1e2127; --surface-2:#242830;
+  --ink:#e8e6e1; --muted:#9aa0a8; --line:#2e343c;
+  --accent:#4fb3bd; --accent-soft:#143033; --accent-ink:#8fdbe2;
+  --good:#5cb37d; --good-soft:#15271d; --bad:#e2838e; --bad-soft:#2b1a1d;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#14171b; --surface:#1e2127; --surface-2:#242830;
+  --ink:#e8e6e1; --muted:#9aa0a8; --line:#2e343c;
+  --accent:#4fb3bd; --accent-soft:#143033; --accent-ink:#8fdbe2;
+  --good:#5cb37d; --good-soft:#15271d; --bad:#e2838e; --bad-soft:#2b1a1d;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.5;margin:0}
+.wrap{max-width:780px;margin:0 auto;padding-inline:16px;padding-block:0 60px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0}
+.mono,.f{font-family:var(--f-mono)}
+
+/* header */
+header{padding-block:22px 10px}
+.title{font-size:1.5rem;font-weight:700;letter-spacing:-.01em}
+.subtitle{color:var(--muted);font-size:.9rem;margin-top:2px}
+.theme-btn{position:absolute;top:16px;right:16px;background:var(--surface);border:1px solid var(--line);
+  color:var(--muted);border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;font-family:var(--f-body)}
+
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;
+  background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{flex:1;min-width:0;background:none;border:none;font-family:var(--f-head);font-weight:600;
+  font-size:.92rem;color:var(--muted);padding:9px 6px;border-radius:8px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+
+/* filter chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  border-radius:999px;padding:5px 12px;font-size:.82rem;cursor:pointer;font-family:var(--f-body)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 18px 20px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.badge{display:inline-block;font-family:var(--f-head);font-size:.68rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--accent-ink);background:var(--accent-soft);
+  padding:3px 9px;border-radius:6px;margin-bottom:12px}
+.prompt{font-size:1.06rem;margin-bottom:16px}
+.prompt .f{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:.95em}
+
+/* options */
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;
+  background:var(--surface-2);border:1.5px solid var(--line);border-radius:10px;
+  padding:11px 13px;font-size:.98rem;color:var(--ink);cursor:pointer;font-family:var(--f-body);transition:border-color .12s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt .ltr{font-family:var(--f-mono);font-weight:600;color:var(--muted);flex:none}
+.opt.correct{background:var(--good-soft);border-color:var(--good)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt.correct .ltr{color:var(--good)} .opt.wrong .ltr{color:var(--bad)}
+
+/* solution */
+.sol{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;font-size:.95rem}
+.sol h3{font-size:.95rem;margin-bottom:7px;color:var(--accent-ink)}
+.sol .line{font-family:var(--f-mono);font-size:.86rem;background:var(--surface-2);
+  border-radius:6px;padding:6px 9px;margin-bottom:5px;overflow-x:auto}
+.verdict{font-weight:700;font-family:var(--f-head);margin-bottom:8px}
+.verdict.ok{color:var(--good)} .verdict.no{color:var(--bad)}
+
+/* controls */
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:10px 18px;
+  font-family:var(--f-head);font-weight:600;font-size:.92rem;cursor:pointer}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink)}
+.score{margin-left:auto;color:var(--muted);font-size:.85rem;font-family:var(--f-mono)}
+
+/* coach */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:.8rem;color:var(--muted);font-weight:600}
+.field input,.field select{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+  border-radius:8px;padding:9px 11px;font-family:var(--f-mono);font-size:.95rem}
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:460px){.inputs{grid-template-columns:1fr}}
+.step{background:var(--surface-2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;
+  padding:10px 13px;margin-bottom:8px}
+.step .k{font-family:var(--f-head);font-weight:700;font-size:.82rem;color:var(--accent-ink);margin-bottom:3px}
+.step .v{font-family:var(--f-mono);font-size:.88rem}
+.hint{color:var(--muted);font-size:.85rem;margin-top:6px}
+
+/* reference */
+.ref h2{font-size:1.1rem;margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:center;font-variant-numeric:tabular-nums}
+th{background:var(--surface-2);font-family:var(--f-head);font-weight:600}
+td.lbl,th.lbl{text-align:left}
+.ftable td:first-child{font-family:var(--f-body);text-align:left}
+.ftable td:nth-child(2){font-family:var(--f-mono);text-align:left}
+.callout{background:var(--accent-soft);border-radius:8px;padding:11px 14px;font-size:.9rem;margin:10px 0}
+.callout b{color:var(--accent-ink)}
+a{color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Spline+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="wrap">
+<button class="theme-btn" id="themeBtn" aria-label="Toggle theme">Theme</button>
+<header>
+  <h1 class="title">BER&nbsp;540 Stats Trainer</h1>
+  <p class="subtitle">Work problems from Modules 1-4 (Privitera 4e). Everything here uses only course content.</p>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-view="practice">Practice</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="coach">Coach</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="reference">Reference</button>
+</div>
+
+<!-- PRACTICE -->
+<section id="practice">
+  <div class="chips" id="modChips">
+    <button class="chip" aria-pressed="true" data-mod="all">All modules</button>
+    <button class="chip" aria-pressed="false" data-mod="12">Mod 1-2</button>
+    <button class="chip" aria-pressed="false" data-mod="3">Mod 3</button>
+    <button class="chip" aria-pressed="false" data-mod="4">Mod 4</button>
+  </div>
+  <div class="card" id="pcard"></div>
+</section>
+
+<!-- COACH -->
+<section id="coach" hidden>
+  <div class="card">
+    <div class="badge">Step-by-step coach</div>
+    <p class="prompt" style="font-size:.98rem">Pick a problem type, enter your numbers, and I will walk the steps one at a time - the same way the professor wants it shown.</p>
+    <div class="field">
+      <label for="ctype">Problem type</label>
+      <select id="ctype">
+        <option value="ztest">One-sample z test (&sigma; known)</option>
+        <option value="ttest">One-sample t test (&sigma; unknown)</option>
+        <option value="ci">Confidence interval</option>
+        <option value="zscore">z-score for one raw score</option>
+        <option value="cohen">Cohen's d (effect size)</option>
+      </select>
+    </div>
+    <div class="inputs" id="cinputs"></div>
+    <div class="row">
+      <button class="btn" id="cstart">Work it step by step</button>
+      <button class="btn ghost" id="cnext" hidden>Next step</button>
+    </div>
+    <div id="csteps" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<!-- REFERENCE -->
+<section id="reference" class="ref" hidden></section>
+</div>
+
+<script>
+"use strict";
+/* ---------- math helpers ---------- */
+function normalCDF(x){
+  const t=1/(1+0.2316419*Math.abs(x));
+  const d=0.3989423*Math.exp(-x*x/2);
+  let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  p=1-p; return x>=0?p:1-p;
+}
+const TMAP={"1":[6.314,12.706,31.821,63.657],"2":[2.92,4.303,6.965,9.925],"3":[2.353,3.182,4.541,5.841],"4":[2.132,2.776,3.747,4.604],"5":[2.015,2.571,3.365,4.032],"6":[1.943,2.447,3.143,3.707],"7":[1.895,2.365,2.998,3.499],"8":[1.86,2.306,2.896,3.355],"9":[1.833,2.262,2.821,3.25],"10":[1.812,2.228,2.764,3.169],"11":[1.796,2.201,2.718,3.106],"12":[1.782,2.179,2.681,3.055],"13":[1.771,2.16,2.65,3.012],"14":[1.761,2.145,2.624,2.977],"15":[1.753,2.131,2.602,2.947],"16":[1.746,2.12,2.583,2.921],"17":[1.74,2.11,2.567,2.898],"18":[1.734,2.101,2.552,2.878],"19":[1.729,2.093,2.539,2.861],"20":[1.725,2.086,2.528,2.845],"21":[1.721,2.08,2.518,2.831],"22":[1.717,2.074,2.508,2.819],"23":[1.714,2.069,2.5,2.807],"24":[1.711,2.064,2.492,2.797],"25":[1.708,2.06,2.485,2.787],"26":[1.706,2.056,2.479,2.779],"27":[1.703,2.052,2.473,2.771],"28":[1.701,2.048,2.467,2.763],"29":[1.699,2.045,2.462,2.756],"30":[1.697,2.042,2.457,2.75],"40":[1.684,2.021,2.423,2.704],"60":[1.671,2,2.39,2.66],"120":[1.658,1.98,2.358,2.617],"inf":[1.645,1.96,2.326,2.576]};
+// two-tailed column index: .10,.05,.02,.01
+function tCrit(df,twoTailAlpha){
+  const col={0.10:0,0.05:1,0.02:2,0.01:3}[twoTailAlpha];
+  let key=String(df);
+  if(!TMAP[key]){ const avail=[30,40,60,120]; if(df>120)key="inf"; else {key="30"; for(const a of avail){if(a<=df)key=String(a);}} }
+  return TMAP[key][col];
+}
+const r2=x=>Math.round(x*100)/100, r4=x=>Math.round(x*1e4)/1e4;
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// build 4 options from correct value + distractor list; de-dupe
+function mkOpts(correct,distract,fmt){
+  fmt=fmt||(x=>String(x));
+  const seen=new Set([fmt(correct)]); const out=[{t:fmt(correct),ok:true}];
+  for(const d of distract){const s=fmt(d); if(!seen.has(s)){seen.add(s);out.push({t:s,ok:false});} if(out.length>=4)break;}
+  return shuffle(out);
+}
+
+/* ---------- problem generators ---------- */
+const GEN={12:[],3:[],4:[]};
+
+// --- Modules 1-2 ---
+GEN[12].push(function(){ // descriptive vs inferential
+  const s=pick([
+    ["A teacher records the average score of her own 28 students to describe how the class did.","descriptive statistics"],
+    ["A researcher uses results from 200 sampled students to estimate how all students in the district would score.","inferential statistics"],
+    ["A principal summarizes attendance for the whole school this week in a bar graph.","descriptive statistics"],
+    ["Pollsters use a sample of 1,000 voters to predict the statewide election result.","inferential statistics"]]);
+  const opts=mkOpts(s[1],["descriptive statistics","inferential statistics","a parameter","sampling error"]);
+  return{mod:"Module 1",q:s[0]+" This is an example of:",opts,
+    sol:["Describing a group you actually measured = <b>descriptive</b>.","Generalizing from a sample to a larger population = <b>inferential</b>."]};
+});
+GEN[12].push(function(){ // scale
+  const s=pick([
+    ["jersey numbers on athletes","nominal"],["ranking finishers as 1st, 2nd, 3rd","ordinal"],
+    ["temperature in degrees Fahrenheit","interval"],["weight in kilograms","ratio"],
+    ["eye color coded 1, 2, 3","nominal"],["a satisfaction rank from low to high","ordinal"]]);
+  const opts=mkOpts(s[1],["nominal","ordinal","interval","ratio"]);
+  return{mod:"Module 1",q:"Measuring "+s[0]+" uses which scale of measurement?",opts,
+    sol:["Labels only → nominal. Ordered ranks → ordinal. Equal intervals, no true zero → interval. True zero → ratio."]};
+});
+GEN[12].push(function(){ // central tendency choice
+  const s=pick([
+    ["strongly skewed by a few extreme values","median"],
+    ["measured on a nominal scale (categories)","mode"],
+    ["roughly normal and measured on a ratio scale","mean"],
+    ["ordinal (ranked) data","median"]]);
+  const opts=mkOpts(s[1],["mean","median","mode","range"]);
+  return{mod:"Module 2",q:"Data that are "+s[0]+" are best summarized by which measure of central tendency?",opts,
+    sol:["mean → normal / interval-ratio","median → skewed / ordinal","mode → nominal or bimodal"]};
+});
+GEN[12].push(function(){ // compute sample SD
+  let data; do{data=Array.from({length:5},()=>ri(2,12));}while(new Set(data).size<3);
+  const M=data.reduce((a,b)=>a+b,0)/data.length;
+  const SS=data.reduce((a,b)=>a+(b-M)*(b-M),0);
+  const varS=SS/(data.length-1), sd=Math.sqrt(varS);
+  const sdPop=Math.sqrt(SS/data.length);
+  const opts=mkOpts(r2(sd),[r2(sdPop),r2(varS),r2(SS)],x=>x.toFixed(2));
+  return{mod:"Module 2",q:"For the sample "+data.join(", ")+", what is the sample standard deviation?",opts,
+    sol:["M = "+data.join("+")+" all over "+data.length+" = "+r2(M),
+      "SS = Σ(X-M)² = "+r2(SS),
+      "s² = SS/(n-1) = "+r2(SS)+"/"+(data.length-1)+" = "+r2(varS),
+      "s = √"+r2(varS)+" = <b>"+r2(sd)+"</b>  (dividing by N instead gives "+r2(sdPop)+")"]};
+});
+GEN[12].push(function(){ // constant
+  const add=Math.random()<0.5, k=ri(3,8);
+  const ans=add?"stays the same":"is multiplied by "+k;
+  const opts=mkOpts(ans,["stays the same","is multiplied by "+k,"increases by "+k,"decreases"]);
+  return{mod:"Module 2",q:"Every score in a data set is "+(add?("increased by "+k+" points"):("multiplied by "+k))+". The standard deviation:",opts,
+    sol:["Adding a constant shifts the mean but does NOT change the spread.","Multiplying every score multiplies the SD by that constant."]};
+});
+GEN[12].push(function(){ // median
+  let data; do{data=Array.from({length:5},()=>ri(1,15));}while(new Set(data).size<3);
+  const sorted=[...data].sort((a,b)=>a-b); const med=sorted[2];
+  const mean=r2(data.reduce((a,b)=>a+b,0)/5);
+  const opts=mkOpts(med,[mean,sorted[0],sorted[4]],x=>String(x));
+  return{mod:"Module 2",q:"What is the median of: "+data.join(", ")+"?",opts,
+    sol:["Order them: "+sorted.join(", "),"The middle (3rd of 5) value is <b>"+med+"</b>."]};
+});
+
+// --- Module 3 ---
+GEN[3].push(function(){ // probability and/or
+  const and=Math.random()<0.5;
+  const p1=ri(2,8)/10, p2=ri(2,8)/10;
+  if(and){ const ans=r2(p1*p2);
+    const opts=mkOpts(ans,[r2(p1+p2),r2(Math.abs(p1-p2)),r2((p1+p2)/2)],x=>x.toFixed(2));
+    return{mod:"Module 3",q:"Two independent events have P(A) = "+p1+" and P(B) = "+p2+". What is P(A and B)?",opts,
+      sol:["Independent → multiply.","P(A and B) = "+p1+" × "+p2+" = <b>"+ans+"</b>"]};
+  } else { const s1=ri(2,4)/10, s2=ri(2,4)/10; const ans=r2(s1+s2);
+    const opts=mkOpts(ans,[r2(s1*s2),r2(Math.abs(s1-s2)),1],x=>x.toFixed(2));
+    return{mod:"Module 3",q:"Two mutually exclusive events have P(A) = "+s1+" and P(B) = "+s2+". What is P(A or B)?",opts,
+      sol:["Mutually exclusive → add.","P(A or B) = "+s1+" + "+s2+" = <b>"+ans+"</b>"]};
+  }
+});
+GEN[3].push(function(){ // expected value
+  const xs=[0,1,2,3]; let ps; do{ps=[ri(1,4),ri(1,4),ri(1,4),ri(1,4)];}while(ps.reduce((a,b)=>a+b,0)!==10);
+  const p=ps.map(v=>v/10); const ev=xs.reduce((a,x,i)=>a+x*p[i],0);
+  const opts=mkOpts(r2(ev),[r2(ev+1),r2(xs.reduce((a,b)=>a+b,0)/4),r2(ev-0.5)],x=>x.toFixed(2));
+  return{mod:"Module 3",q:"A distribution of X is: "+xs.map((x,i)=>"X="+x+" p="+p[i]).join(",  ")+". What is E(X)?",opts,
+    sol:["E(X) = Σ[X·p(X)]",xs.map((x,i)=>x+"("+p[i]+")").join(" + ")+" = <b>"+r2(ev)+"</b>"]};
+});
+GEN[3].push(function(){ // z-score
+  const mu=ri(40,80), sd=pick([5,8,10,12,15]); const z=pick([-2,-1.5,-1,1,1.5,2,2.5]);
+  const X=mu+z*sd;
+  const opts=mkOpts(z,[r2(X-mu),r2(-z),r2((X-mu)/ (sd/2))],x=>(x>0?"+":"")+x);
+  return{mod:"Module 3",q:"On a test with μ = "+mu+" and σ = "+sd+", a student scores "+X+". What is the z-score?",opts,
+    sol:["z = (X - μ) / σ","= ("+X+" - "+mu+") / "+sd+" = "+(X-mu)+"/"+sd+" = <b>"+(z>0?"+":"")+z+"</b>"]};
+});
+GEN[3].push(function(){ // z-table area
+  const z=pick([0.5,1,1.25,1.5,1.75,2,2.33]); const greater=Math.random()<0.5;
+  const left=normalCDF(z), area=greater?1-left:left;
+  const opts=mkOpts(r4(area),[r4(greater?left:1-left),r4(area-0.5<0?0.5-area:area-0.5),r4(1-area)],x=>x.toFixed(4));
+  return{mod:"Module 3",q:"Using the cumulative (area-to-left) z-table, what is P(z "+(greater?">":"<")+" "+z+")?",opts,
+    sol:["Table gives area to the LEFT: P(z < "+z+") = "+r4(left),
+      greater?("Greater-than = 1 - "+r4(left)+" = <b>"+r4(area)+"</b>"):("Less-than = read straight off = <b>"+r4(area)+"</b>")]};
+});
+GEN[3].push(function(){ // reverse z (percentile cutoff)
+  const opt=pick([[.90,1.28,"top 10%"],[.95,1.645,"top 5%"],[.975,1.96,"top 2.5%"],[.80,0.84,"top 20%"]]);
+  const mu=pick([100,500,50,75]), sd=pick([10,15,100,8]);
+  const X=mu+opt[1]*sd;
+  const opts=mkOpts(r2(X),[r2(mu-opt[1]*sd),r2(mu+opt[1]*sd/2),r2(mu)],x=>x.toFixed(2));
+  return{mod:"Module 3",q:"Scores are normal with μ = "+mu+" and σ = "+sd+". What score cuts off the "+opt[2]+"?",opts,
+    sol:[opt[2]+" → area to left = "+opt[0]+" → z ≈ "+opt[1],
+      "X = μ + zσ = "+mu+" + "+opt[1]+"("+sd+") = <b>"+r2(X)+"</b>"]};
+});
+GEN[3].push(function(){ // sampling distribution z
+  const mu=ri(50,100), sd=pick([10,12,15,20,24]); const n=pick([4,9,16,25,36]);
+  const se=sd/Math.sqrt(n); const z=pick([1,1.5,2,-1,-2]); const M=r2(mu+z*se);
+  const opts=mkOpts(r2(z),[r2(M-mu),r2((M-mu)/sd),r2(-z)],x=>(x>0?"+":"")+x.toFixed(2));
+  return{mod:"Module 3",q:"A population has μ = "+mu+" and σ = "+sd+". A sample of n = "+n+" has a mean of "+M+". What is the z for this sample mean?",opts,
+    sol:["σₘ = σ/√n = "+sd+"/√"+n+" = "+sd+"/"+Math.sqrt(n)+" = "+r2(se),
+      "z = (x̄ - μ)/σₘ = ("+M+" - "+mu+")/"+r2(se)+" = <b>"+(z>0?"+":"")+r2(z)+"</b>"]};
+});
+
+// --- Module 4 ---
+GEN[4].push(function(){ // z vs t
+  const known=Math.random()<0.5;
+  const ans=known?"one-sample z test":"one-sample t test";
+  const opts=mkOpts(ans,["one-sample z test","one-sample t test","z test for a proportion","confidence interval only"]);
+  return{mod:"Module 4",q:"A researcher tests a sample against a known population mean and "+(known?"knows the population standard deviation (σ).":"knows only the sample standard deviation (s).")+" Which test fits?",opts,
+    sol:["σ known → z test.","σ unknown (only s) → t test, df = n - 1."]};
+});
+GEN[4].push(function(){ // df
+  const n=ri(8,40); const opts=mkOpts(n-1,[n,n+1,n-2],x=>String(x));
+  return{mod:"Module 4",q:"A one-sample t test uses a sample of "+n+" participants. What are the degrees of freedom?",opts,
+    sol:["df = n - 1 = "+n+" - 1 = <b>"+(n-1)+"</b>"]};
+});
+GEN[4].push(function(){ // critical value z
+  const two=Math.random()<0.6; const a=pick([0.05,0.01]);
+  const map={two:{0.05:"±1.96",0.01:"±2.58"},one:{0.05:"1.645",0.01:"2.33"}};
+  const ans=two?map.two[a]:map.one[a];
+  const opts=mkOpts(ans,["±1.96","1.645","±2.58","2.33"]);
+  return{mod:"Module 4",q:"For a "+(two?"two-tailed":"one-tailed")+" one-sample z test at α = "+a+", what is the critical value?",opts,
+    sol:[(two?"Two-tailed":"One-tailed")+" at "+a+" → critical z = <b>"+ans+"</b>",
+      "Anchors: two-tailed .05 = ±1.96, one-tailed .05 = 1.645, two-tailed .01 = ±2.58."]};
+});
+GEN[4].push(function(){ // z test statistic
+  const mu=ri(60,90), sd=pick([6,8,10,12,15]), n=pick([4,9,16,25,36]);
+  const se=sd/Math.sqrt(n); const z=pick([1,1.5,2,2.5]); const M=r2(mu+z*se);
+  const opts=mkOpts(r2(z),[r2(M-mu),r2((M-mu)/sd),r2(z*2)],x=>x.toFixed(2));
+  return{mod:"Module 4",q:"μ = "+mu+", σ = "+sd+", n = "+n+", sample M = "+M+". What is the z test statistic?",opts,
+    sol:["σₘ = σ/√n = "+sd+"/"+Math.sqrt(n)+" = "+r2(se),
+      "z = (M - μ)/σₘ = ("+M+" - "+mu+")/"+r2(se)+" = <b>"+r2(z)+"</b>"]};
+});
+GEN[4].push(function(){ // decision
+  const z=pick([1.2,1.5,1.73,1.8,2.1,2.5]); const crit=1.96;
+  const reject=z>crit; const ans=reject?"reject the null hypothesis":"fail to reject the null hypothesis";
+  const opts=mkOpts(ans,["reject the null hypothesis","fail to reject the null hypothesis","it depends on the sample size","accept the null hypothesis"]);
+  return{mod:"Module 4",q:"A two-tailed z test at α = .05 gives a test statistic of z = "+z+". What is the decision?",opts,
+    sol:["Critical value = ±1.96.",z+(reject?" > ":" < ")+"1.96 → <b>"+ans+"</b>"]};
+});
+GEN[4].push(function(){ // type error
+  const s=pick([["rejects a null hypothesis that is actually true","a Type I error"],
+    ["fails to reject a null hypothesis that is actually false","a Type II error"],
+    ["correctly rejects a false null hypothesis","power (a correct decision)"]]);
+  const opts=mkOpts(s[1],["a Type I error","a Type II error","power (a correct decision)","sampling error"]);
+  return{mod:"Module 4",q:"A researcher "+s[0]+". This is:",opts,
+    sol:["Reject a TRUE null = Type I (rate α).","Keep a FALSE null = Type II (rate β).","Correctly reject a false null = power = 1 - β."]};
+});
+GEN[4].push(function(){ // cohen's d
+  const sd=pick([8,10,12,15,20]); const d=pick([0.2,0.5,0.8,0.3,0.65]); const diff=r2(d*sd);
+  const mu=ri(50,90); const M=r2(mu+diff);
+  const size=d<0.5?"small":(d<0.8?"medium":"large");
+  const ans=r2(d)+", "+size;
+  const opts=mkOpts(ans,[r2(d)+", "+(size==="small"?"large":"small"),r2(d*2)+", large",r2(d/2)+", small"]);
+  return{mod:"Module 4",q:"A one-sample test has M = "+M+", μ = "+mu+", and σ = "+sd+". What is Cohen's d and its size?",opts,
+    sol:["d = (M - μ)/σ = ("+M+" - "+mu+")/"+sd+" = "+diff+"/"+sd+" = "+r2(d),
+      "Cutoffs 0.2 small, 0.5 medium, 0.8 large → <b>"+size+"</b>"]};
+});
+GEN[4].push(function(){ // confidence interval z
+  const M=ri(40,90); const se=pick([1,2,2.5,3]); const lvl=pick([[.95,1.96],[.99,2.58]]);
+  const m=r2(lvl[1]*se); const lo=r2(M-m), hi=r2(M+m);
+  const ans="["+lo+", "+hi+"]";
+  const opts=mkOpts(ans,["["+r2(M-lvl[1]*se*2)+", "+r2(M+lvl[1]*se*2)+"]","["+(M-se)+", "+(M+se)+"]","["+r2(M-m-1)+", "+r2(M+m+1)+"]"]);
+  return{mod:"Module 4",q:"With σ known, M = "+M+" and σₘ = "+se+". What is the "+(lvl[0]*100)+"% confidence interval for μ?",opts,
+    sol:[(lvl[0]*100)+"% → critical z = "+lvl[1],
+      "CI = M ± z(σₘ) = "+M+" ± "+lvl[1]+"("+se+") = "+M+" ± "+m,
+      "= <b>["+lo+", "+hi+"]</b>"]};
+});
+
+/* ---------- practice UI ---------- */
+let curMod="all", answered=false, score={c:0,n:0};
+function pool(){ if(curMod==="all")return [...GEN[12],...GEN[3],...GEN[4]]; return GEN[curMod]; }
+function newProblem(){
+  answered=false;
+  const p=pick(pool())();
+  const card=document.getElementById("pcard");
+  card.innerHTML="";
+  const badge=document.createElement("div"); badge.className="badge"; badge.textContent=p.mod; card.appendChild(badge);
+  const q=document.createElement("p"); q.className="prompt"; q.innerHTML=styleMath(p.q); card.appendChild(q);
+  const ol=document.createElement("div"); ol.className="opts";
+  const letters=["A","B","C","D"];
+  p.opts.forEach((o,i)=>{
+    const b=document.createElement("button"); b.className="opt";
+    b.innerHTML='<span class="ltr">'+letters[i]+'</span><span>'+styleMath(o.t)+'</span>';
+    b.onclick=()=>choose(b,o,p,ol); ol.appendChild(b);
+  });
+  card.appendChild(ol);
+  const sol=document.createElement("div"); sol.id="solbox"; card.appendChild(sol);
+}
+function choose(btn,o,p,ol){
+  if(answered)return; answered=true; score.n++;
+  [...ol.children].forEach((c,i)=>{ c.disabled=true; if(p.opts[i].ok)c.classList.add("correct"); });
+  if(o.ok){btn.classList.add("correct");score.c++;} else btn.classList.add("wrong");
+  const box=document.getElementById("solbox");
+  box.className="sol";
+  box.innerHTML='<div class="verdict '+(o.ok?"ok":"no")+'">'+(o.ok?"Correct":"Not quite")+'</div>'+
+    '<h3>How to work it</h3>'+p.sol.map(l=>'<div class="line">'+styleMath(l)+'</div>').join("")+
+    '<div class="row"><button class="btn" id="nextP">Next problem</button>'+
+    '<span class="score">Score '+score.c+" / "+score.n+'</span></div>';
+  document.getElementById("nextP").onclick=newProblem;
+}
+function styleMath(s){ return s.replace(/σₘ/g,'<span class="f">σ<sub>M</sub></span>'); }
+
+document.getElementById("modChips").onclick=e=>{
+  const b=e.target.closest(".chip"); if(!b)return;
+  [...e.currentTarget.children].forEach(c=>c.setAttribute("aria-pressed",c===b));
+  curMod=b.dataset.mod; newProblem();
+};
+
+/* ---------- coach ---------- */
+const COACH={
+  ztest:{fields:[["mu","Population mean μ"],["sigma","Population SD σ"],["n","Sample size n"],["M","Sample mean M"],["alpha","Alpha (.05 or .01)",".05"],["tails","Tails (1 or 2)","2"]]},
+  ttest:{fields:[["mu","Population mean μ"],["s","Sample SD s"],["n","Sample size n"],["M","Sample mean M"],["alpha","Alpha (.05 or .01)",".05"],["tails","Tails (1 or 2)","2"]]},
+  ci:{fields:[["M","Sample mean M"],["sd","SD (σ or s)"],["n","Sample size n"],["level","Level (.95 or .99)",".95"],["known","σ known? (yes/no)","no"]]},
+  zscore:{fields:[["mu","Population mean μ"],["sigma","Population SD σ"],["X","Raw score X"]]},
+  cohen:{fields:[["M","Sample mean M"],["mu","Population mean μ"],["sd","SD (σ or s)"]]}
+};
+let steps=[], stepIdx=0;
+function renderInputs(){
+  const t=document.getElementById("ctype").value;
+  const wrap=document.getElementById("cinputs"); wrap.innerHTML="";
+  COACH[t].fields.forEach(f=>{
+    const d=document.createElement("div"); d.className="field";
+    d.innerHTML='<label for="c_'+f[0]+'">'+f[1]+'</label><input id="c_'+f[0]+'" value="'+(f[2]||"")+'">';
+    wrap.appendChild(d);
+  });
+  document.getElementById("csteps").innerHTML="";
+  document.getElementById("cnext").hidden=true;
+}
+function val(id){return parseFloat(document.getElementById("c_"+id).value);}
+function buildSteps(){
+  const t=document.getElementById("ctype").value; steps=[];
+  const S=(k,v)=>steps.push({k,v});
+  if(t==="ztest"||t==="ttest"){
+    const mu=val("mu"),n=val("n"),M=val("M"),alpha=val("alpha"),tails=val("tails");
+    const sd=t==="ztest"?val("sigma"):val("s");
+    const tail=tails===1?"<":"≠"; // default; direction simplified
+    S("Step 1 - Hypotheses","H0: μ = "+mu+"    H1: μ "+(tails===1?"< or >":"≠")+" "+mu+"  ("+(tails===1?"one":"two")+"-tailed)");
+    const se=sd/Math.sqrt(n);
+    if(t==="ttest") S("Step 2 - df","df = n - 1 = "+n+" - 1 = "+(n-1));
+    S((t==="ttest"?"Step 3":"Step 2")+" - Standard error",(t==="ztest"?"σM":"sM")+" = "+sd+"/√"+n+" = "+r2(se));
+    const stat=(M-mu)/se;
+    S("Set α","α = "+alpha+", "+(tails===1?"one":"two")+"-tailed");
+    let crit;
+    if(t==="ztest"){ crit=({2:{0.05:1.96,0.01:2.58},1:{0.05:1.645,0.01:2.326}})[tails][alpha];
+      S("Critical value","critical z = "+(tails===2?"±":"")+crit); }
+    else { const col=tails===2?alpha:(alpha*2); crit=tCrit(n-1,col);
+      S("Critical value","df "+(n-1)+", "+(tails===1?"one":"two")+"-tailed "+alpha+" → critical t = "+(tails===2?"±":"")+r2(crit)); }
+    S((t==="ztest"?"Test statistic":"Step - Test statistic"),(t==="ztest"?"z":"t")+" = (M - μ)/"+(t==="ztest"?"σM":"sM")+" = ("+M+" - "+mu+")/"+r2(se)+" = "+r2(stat));
+    const reject=Math.abs(stat)>crit;
+    S("Decision",r2(Math.abs(stat))+(reject?" > ":" < ")+r2(crit)+" → "+(reject?"REJECT":"FAIL TO REJECT")+" the null"+
+      (t==="ttest"?("   (APA: t("+(n-1)+") = "+r2(stat)+", p "+(reject?"<":">")+" "+alpha+")"):""));
+  } else if(t==="ci"){
+    const M=val("M"),sd=val("sd"),n=val("n"),level=val("level"),known=(document.getElementById("c_known").value||"").trim().toLowerCase().startsWith("y");
+    const se=sd/Math.sqrt(n);
+    S("Standard error",(known?"σM":"sM")+" = "+sd+"/√"+n+" = "+r2(se));
+    let crit, how;
+    if(known){ crit=({0.95:1.96,0.99:2.58})[level]; how=(level*100)+"% → z = "+crit; }
+    else { const col=1-level<0.03?0.05:0.01; crit=tCrit(n-1,col); how="df "+(n-1)+", "+(level*100)+"% → t = "+r2(crit); }
+    S("Critical value",how);
+    const m=crit*se;
+    S("Margin of error","("+r2(crit)+")("+r2(se)+") = "+r2(m));
+    S("Interval","CI = M ± (crit)(SE) = "+M+" ± "+r2(m)+" = ["+r2(M-m)+", "+r2(M+m)+"]");
+  } else if(t==="zscore"){
+    const mu=val("mu"),sigma=val("sigma"),X=val("X"); const z=(X-mu)/sigma;
+    S("z-score","z = (X - μ)/σ = ("+X+" - "+mu+")/"+sigma+" = "+r2(z));
+    S("Area to the left","P(z < "+r2(z)+") = "+r4(normalCDF(z))+"  ("+r2(normalCDF(z)*100)+"th percentile)");
+    S("Area to the right","P(z > "+r2(z)+") = 1 - "+r4(normalCDF(z))+" = "+r4(1-normalCDF(z)));
+  } else if(t==="cohen"){
+    const M=val("M"),mu=val("mu"),sd=val("sd"); const d=(M-mu)/sd; const ad=Math.abs(d);
+    const size=ad<0.2?"below small":(ad<0.5?"small":(ad<0.8?"medium":"large"));
+    S("Cohen's d","d = (M - μ)/SD = ("+M+" - "+mu+")/"+sd+" = "+r2(d));
+    S("Interpretation","|d| = "+r2(ad)+" → "+size+"  (cutoffs 0.2 / 0.5 / 0.8)");
+  }
+  stepIdx=0;
+  const box=document.getElementById("csteps"); box.innerHTML="";
+  revealNext();
+  document.getElementById("cnext").hidden=false;
+}
+function revealNext(){
+  if(stepIdx>=steps.length){document.getElementById("cnext").hidden=true;return;}
+  const s=steps[stepIdx++];
+  const d=document.createElement("div"); d.className="step";
+  d.innerHTML='<div class="k">'+s.k+'</div><div class="v">'+s.v+'</div>';
+  document.getElementById("csteps").appendChild(d);
+  if(stepIdx>=steps.length)document.getElementById("cnext").hidden=true;
+}
+document.getElementById("ctype").onchange=renderInputs;
+document.getElementById("cstart").onclick=()=>{ try{buildSteps();}catch(e){alert&&0;} };
+document.getElementById("cnext").onclick=revealNext;
+
+/* ---------- reference ---------- */
+function buildReference(){
+  const el=document.getElementById("reference");
+  // formulas
+  let h='<h2>Formulas</h2><div class="tblwrap"><table class="ftable"><tr><th class="lbl">Name</th><th class="lbl">Formula</th><th class="lbl">Use when</th></tr>';
+  [["Sum of squares","SS = Σ(X - M)²","toward variance"],
+   ["Variance (sample)","SS ÷ (n - 1)","spread, sample"],
+   ["Standard deviation","√variance","spread"],
+   ["z-score","z = (X - μ)/σ","one score"],
+   ["reverse z","X = μ + zσ","percentile → score"],
+   ["Standard error","σM = σ/√n","sample mean"],
+   ["z test","z = (M - μ)/(σ/√n)","σ known"],
+   ["t test","t = (M - μ)/(s/√n), df=n-1","σ unknown"],
+   ["Cohen's d","(M - μ)/σ or /s","effect size"],
+   ["Confidence interval","M ± (crit)(SE)","interval estimate"]]
+   .forEach(r=>h+='<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>');
+  h+='</table></div>';
+  h+='<div class="callout"><b>z vs t:</b> see σ (population SD) → z test. See only s (sample SD) → t test, df = n - 1.</div>';
+  h+='<div class="callout"><b>Decision:</b> test value past the critical value → reject. Or p &lt; α → reject (SPSS: Sig. 2-tailed). CI: null μ outside the interval → reject.</div>';
+  // critical values
+  h+='<h2>Critical values (z)</h2><div class="tblwrap"><table><tr><th>Test</th><th>.05</th><th>.01</th></tr>'+
+     '<tr><td class="lbl">one-tailed</td><td>1.645</td><td>2.33</td></tr>'+
+     '<tr><td class="lbl">two-tailed</td><td>±1.96</td><td>±2.58</td></tr></table></div>';
+  // z-table
+  h+='<h2>Z-table (area to the left) = P(z &lt; z)</h2>';
+  h+='<div class="callout">Less than = read off. Greater than = 1 - value. Between = larger - smaller. Reverse = find z for the left-area, then X = μ + zσ.</div>';
+  h+='<div class="tblwrap"><table><tr><th>z</th>';
+  for(let c=0;c<10;c++)h+='<th>.0'+c+'</th>'; h+='</tr>';
+  for(let r=0;r<=34;r++){ const zb=r/10; h+='<tr><th>'+zb.toFixed(1)+'</th>';
+    for(let c=0;c<10;c++){ h+='<td>'+normalCDF(zb+c/100).toFixed(4)+'</td>'; } h+='</tr>'; }
+  h+='</table></div>';
+  // t-table
+  h+='<h2>T-table (critical values)</h2>';
+  h+='<div class="callout">Column headers are two-tailed α; one-tailed α is half (the .10 column = one-tailed .05).</div>';
+  h+='<div class="tblwrap"><table><tr><th>df</th><th>.10 (.05)</th><th>.05 (.025)</th><th>.02 (.01)</th><th>.01 (.005)</th></tr>';
+  Object.keys(TMAP).forEach(k=>{ const lbl=k==="inf"?"∞":k; const v=TMAP[k];
+    h+='<tr><th>'+lbl+'</th><td>'+v[0].toFixed(3)+'</td><td>'+v[1].toFixed(3)+'</td><td>'+v[2].toFixed(3)+'</td><td>'+v[3].toFixed(3)+'</td></tr>'; });
+  h+='</table></div>';
+  el.innerHTML=h;
+}
+
+/* ---------- tabs + theme ---------- */
+document.querySelector(".tabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(!t)return;
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
+  ["practice","coach","reference"].forEach(v=>{document.getElementById(v).hidden=(v!==t.dataset.view);});
+});
+const tbtn=document.getElementById("themeBtn");
+function curTheme(){try{return localStorage.getItem("ber540theme");}catch(e){return null;}}
+function applyTheme(m){ if(m)document.documentElement.setAttribute("data-theme",m); else document.documentElement.removeAttribute("data-theme"); }
+applyTheme(curTheme());
+tbtn.onclick=()=>{ const now=document.documentElement.getAttribute("data-theme");
+  const dark=now?now==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+  const next=dark?"light":"dark"; applyTheme(next); try{localStorage.setItem("ber540theme",next);}catch(e){} };
+
+/* init */
+renderInputs(); buildReference(); newProblem();
+</script>
+
+</body></html>
